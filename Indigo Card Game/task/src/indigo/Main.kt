@@ -1,7 +1,14 @@
 package indigo
 
-var cardsInHand = mutableListOf<String>()
-var computerCards = mutableListOf<String>()
+import java.lang.Exception
+
+const val TITLE = "Indigo Card Game"
+const val INIT_TABLE = 4
+const val INIT_HAND = 6
+const val COMP_IND = 1
+const val PLAYER_IND = 0
+const val ADD_SCORE = 3
+var lastWinCards = PLAYER_IND
 var cardsOnTable = mutableListOf<String>()
 val ranks = listOf("A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K")
 val suits = listOf("♦", "♥", "♠", "♣")
@@ -10,12 +17,11 @@ val deck = buildList {
         for (j in ranks) add("$j$i")
     }
 }
-const val TITLE = "Indigo Card Game"
-const val  INIT_TABLE = 4
-const val INIT_HAND = 6
 var currentDeck = deck.toMutableList()
 var play = true
-var userTurn = true
+var index = PLAYER_IND
+var firstInd = PLAYER_IND
+var users: List<User> = listOf(Player(), Computer())
 
 fun main() {
     play()
@@ -37,46 +43,54 @@ fun initGame() {
     shuffle()
     cardsOnTable = get(INIT_TABLE)
     println("Initial cards on the table: ${cardsOnTable.joinToString(" ")}")
-    cardsInHand = get(INIT_HAND)
-    computerCards = get(INIT_HAND)
     shuffle()
 }
 
 fun turn() {
-    println("${cardsOnTable.size} cards on the table, and the top card is ${cardsOnTable.last()}")
-    if (cardsOnTable.size == deck.size) {
+    println(if (cardsOnTable.isEmpty()) "No cards on the table" else "${cardsOnTable.size} cards on the table, and the top card is ${cardsOnTable.last()}")
+    if (currentDeck.isEmpty() && users[index].cards.isEmpty()) {
         play = false
+        users[lastWinCards].winCards(cardsOnTable)
+        finalScore()
+        printScores(false)
         return
     }
-    if (userTurn) {
-        if (cardsInHand.isEmpty()) cardsInHand = get(INIT_HAND)
-        print("Cards in hand: ")
-        (0 until cardsInHand.size).forEach {
-            print("${it + 1})${cardsInHand[it]} ")
-        }
-        println()
-        while (true) {
-            try {
-                println("Choose a card to play (1-${cardsInHand.size}):")
-                val s = readln()
-                if (s == "exit") {
-                    play = false
-                    return
-                }
-                val n = s.toInt()
-                cardsOnTable.add(cardsInHand.removeAt(n - 1))
-            } catch (e: Exception) {
-                continue
-            }
-            break
-        }
-    } else {
-        if (computerCards.isEmpty()) computerCards = get(INIT_HAND)
-        cardsOnTable.add(computerCards.removeFirst())
-        println("Computer plays ${cardsOnTable.last()}")
+    try {
+        users[index].turn()
+    } catch (e: Exception) {
+        return
     }
-    userTurn = !userTurn
+    if (checkWinCards()) {
+        lastWinCards = index
+        users[index].winCards(cardsOnTable)
+        cardsOnTable.clear()
+        printScores()
+    }
+    index++
+    index %= 2
     shuffle()
+}
+
+fun finalScore() {
+    var index = PLAYER_IND
+    if (users[COMP_IND].winedCardsCount == users[PLAYER_IND].winedCardsCount) index = firstInd
+    else if (users[COMP_IND].winedCardsCount > users[PLAYER_IND].winedCardsCount) index = COMP_IND
+    users[index].score += ADD_SCORE
+}
+
+fun checkWinCards(): Boolean {
+    return cardsOnTable.size > 1 &&
+            (cardsOnTable.last()[0] == cardsOnTable[cardsOnTable.size - 2][0] ||
+                    cardsOnTable.last()[cardsOnTable.last().length - 1] ==
+                    cardsOnTable[cardsOnTable.size - 2][cardsOnTable[cardsOnTable.size - 2].length - 1])
+}
+
+fun printScores(isNotFinal: Boolean = true) {
+    if (isNotFinal) println("${users[index].name} wins cards")
+    println(
+        """Score: Player ${users[PLAYER_IND].score} - Computer ${users[COMP_IND].score}
+Cards: Player ${users[PLAYER_IND].winedCardsCount} - Computer ${users[COMP_IND].winedCardsCount}"""
+    )
 }
 
 fun playFirst() {
@@ -85,7 +99,9 @@ fun playFirst() {
         when (readln().lowercase()) {
             "yes" -> return
             "no" -> {
-                userTurn = false
+                index = COMP_IND
+                firstInd = COMP_IND
+                lastWinCards = COMP_IND
                 return
             }
         }
