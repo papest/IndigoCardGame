@@ -51,8 +51,33 @@ class Player : User("Player") {
 class Computer : User("Computer") {
     override fun turn() {
         super.turn()
-        cardsOnTable.add(cards.removeFirst())
+        println(cards.joinToString(" "))
+        val card = cardSelection()
+        cards.remove(card)
+        cardsOnTable.add(card)
         println("Computer plays ${cardsOnTable.last()}")
+    }
 
+    private fun cardSelection(): String {
+        if (cards.size == 1) return cards[0]
+        if (cardsOnTable.size > 0) {
+            val firstCandidates = cards.filter {
+                it.last() == cardsOnTable.last().last()
+            }
+            if (firstCandidates.size > 1) return firstCandidates[0]
+            val secondCandidates = cards.filter {
+                it.first() == cardsOnTable.last().first()
+            }
+            if (secondCandidates.size > 1) return secondCandidates[0]
+            if (firstCandidates.isNotEmpty()) return firstCandidates[0]
+            if (secondCandidates.isNotEmpty()) return secondCandidates[0]
+        }
+        for (suit in suits) {
+            val suitCards = cards.filter { suit[0] == it.last() }.toMutableList()
+            if (suitCards.size > 1) return suitCards[0]
+        }
+        val groupByRanks = cards.groupBy { it[0] }.values.filter { it.size > 1 }
+        if (groupByRanks.isNotEmpty()) return groupByRanks[0][0]
+        return cards[0]
     }
 }

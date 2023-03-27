@@ -55,6 +55,7 @@ fun turn() {
         printScores(false)
         return
     }
+    shuffle()
     try {
         users[index].turn()
     } catch (e: Exception) {
@@ -68,7 +69,6 @@ fun turn() {
     }
     index++
     index %= 2
-    shuffle()
 }
 
 fun finalScore() {
@@ -115,5 +115,5 @@ fun get(number: Int): MutableList<String> {
 }
 
 fun shuffle() {
-    currentDeck.shuffled()
+    currentDeck = currentDeck.shuffled().toMutableList()
 }
