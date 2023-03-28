@@ -1,0 +1,1 @@
+fun multiplyInts(list: List<Any>): List<Any> = list.map { i -> if (i is Int) i + i else i }

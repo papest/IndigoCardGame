@@ -1,0 +1,1 @@
+fun <T> countElementsOfType(list: List<Any>, clazz: Class<T>): Int = list.count(clazz::isInstance)

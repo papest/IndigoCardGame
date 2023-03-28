@@ -1,0 +1,1 @@
+fun countStrings(list: List<Any>): Int = list.filterIsInstance<String>().count()
